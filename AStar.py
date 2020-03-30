@@ -80,23 +80,27 @@ class AStar:
         w = 101
         incumbent = []
 
-        # Initialize both open and closed list
+        # Initialize open list
         open_list = []
 
         # Add the start node
         h.heappush(open_list, (start_node.f, start_node))
 
         # Loop until you find the end
-        while len(open_list) > 0 and w >= 1:
-            newSolution = self.improveAstar(open_list, w, g, end_node)
+        finished = False
+        while len(open_list) > 0 and not finished:
+            if w == 1:
+                finished = True
+            newSolution = self.improveAstar(open_list, w, g, end_node, start)
             if newSolution is not None:
                 g = newSolution[1]
                 incumbent = newSolution[0]
-                print(incumbent)
+                GUI(incumbent, self.v, False, user_input)
             else:
                 return incumbent
 
-            w = w - 10
+            if w > 1:
+                w = w - 10
 
             for node in open_list:
                 if node[1].f >= g:
@@ -104,8 +108,13 @@ class AStar:
 
         return incumbent
 
-    def improveAstar(self, open_list, w, g, end_node):
+    def improveAstar(self, open_list_inc, w, g, end_node, start):
+        start_node = Node(None, start)
+        start_node.g = start_node.h = start_node.f = 0
         closed_list = []
+        open_list = open_list_inc
+
+        h.heappush(open_list, (start_node.f, start_node))
 
         while len(open_list) > 0:
             # Get the current node
@@ -119,7 +128,7 @@ class AStar:
                     path.append(current.position)
                     current = current.parent
                 return path[::-1], current_node.g
-            
+
             # gets points that we can go to
             children = getChildren(current_node, self.v, self.e, self.shape)
 
@@ -141,5 +150,5 @@ class AStar:
                     if child_node == node:
                         continue
 
-                    h.heappush(open_list, (child_node.f, child_node))
+                h.heappush(open_list, (child_node.f, child_node))
         return None

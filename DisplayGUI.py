@@ -77,10 +77,13 @@ class GUI:
             x = point[0] * gridXSize
             y = point[1] * gridYSize
             p.append((x, y))
-
-        pygame.draw.lines(gameDisplay, red, False, p, 4)
-
+        color = red
+        if permDisplay:
+            color = green
+        pygame.draw.lines(gameDisplay, color, False, p, 4)
         pygame.display.update()
+        time.sleep(1)
+
         if permDisplay:
             running = True
             while running:
