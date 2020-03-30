@@ -1,4 +1,4 @@
-from math import sqrt
+from math import sqrt, inf
 from Node import Node
 import heapq as h
 from DisplayGUI import GUI
@@ -50,9 +50,10 @@ def getChildren(node, v, e, shape):
             for shpe in shape:
                 if point in shpe and node.position in shpe:
                     if point == shpe[-1]:
-                        if not(node.position == shpe[-2] or node.position == shpe[0]) and point not in children:
+                        if not (node.position == shpe[-2] or node.position == shpe[0]) and point not in children:
                             dissects_shape = True
-                    elif not(node.position == shpe[shpe.index(point)+1] or node.position == shpe[shpe.index(point)-1]):
+                    elif not (node.position == shpe[shpe.index(point) + 1] or node.position == shpe[
+                        shpe.index(point) - 1]):
                         dissects_shape = True
             if point not in children and not dissects_shape:
                 children.append(point)
@@ -64,11 +65,10 @@ def ED(point, end):
 
 
 class AStar:
-    def __init__(self, v, e, shape, constraint):
+    def __init__(self, v, e, shape):
         self.v = v
         self.e = e
         self.shape = shape
-        self.constraint = constraint
 
     def astar(self, start, end, user_input):
         # Create start and end node
@@ -76,28 +76,50 @@ class AStar:
         start_node.g = start_node.h = start_node.f = 0
         end_node = Node(None, end)
         end_node.g = end_node.h = end_node.f = 0
+        g = inf
+        w = 101
+        incumbent = []
 
         # Initialize both open and closed list
-        open_list, closed_list = [], []
+        open_list = []
 
         # Add the start node
         h.heappush(open_list, (start_node.f, start_node))
 
         # Loop until you find the end
+        while len(open_list) > 0 and w >= 1:
+            newSolution = self.improveAstar(open_list, w, g, end_node)
+            if newSolution is not None:
+                g = newSolution[1]
+                incumbent = newSolution[0]
+                print(incumbent)
+            else:
+                return incumbent
+
+            w = w - 10
+
+            for node in open_list:
+                if node[1].f >= g:
+                    open_list.pop(open_list.index(node))
+
+        return incumbent
+
+    def improveAstar(self, open_list, w, g, end_node):
+        closed_list = []
+
         while len(open_list) > 0:
             # Get the current node
             current_node = h.heappop(open_list)[1]
             closed_list.append(current_node)
 
-            # found the end
             if current_node == end_node:
                 path = []
                 current = current_node
                 while current is not None:
                     path.append(current.position)
                     current = current.parent
-                return path[::-1]
-
+                return path[::-1], current_node.g
+            
             # gets points that we can go to
             children = getChildren(current_node, self.v, self.e, self.shape)
 
@@ -108,27 +130,16 @@ class AStar:
                 # calculate scores
                 child_node.g = ED(current_node.position, point) + current_node.g
                 child_node.h = ED(point, end_node.position)
-                child_node.f = child_node.g + child_node.h
+                child_node.f = child_node.g + (child_node.h * w)
 
                 # check if node in open or closed list
                 for node in open_list:
                     if child_node == node[1] and child_node.g > node[1].g:
-                        path = []
-                        current = current_node
-                        while current is not None:
-                            path.append(current.position)
-                            current = current.parent
-
-                        if len(path) > 1:
-                            GUI(path[::-1], self.v, False, user_input)
                         continue
 
                 for node in closed_list:
                     if child_node == node:
                         continue
 
-                if child_node.f > self.constraint:
-                    continue
-
-                h.heappush(open_list, (child_node.f, child_node))
-
+                    h.heappush(open_list, (child_node.f, child_node))
+        return None

@@ -81,8 +81,11 @@ class GUI:
         pygame.draw.lines(gameDisplay, red, False, p, 4)
 
         pygame.display.update()
-
         if permDisplay:
-            pygame.display.update()
-            time.sleep(7)
-            pygame.display.quit()
+            running = True
+            while running:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        running = False
+                    pygame.display.update()
+
