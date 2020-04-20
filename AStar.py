@@ -1,154 +1,128 @@
 from math import sqrt, inf
 from Node import Node
-import heapq as h
-from DisplayGUI import GUI
-import time
-
-
-def onSeg(p, q, r):
-    if (min(p[0], r[0]) >= q[0] > max(p[0], r[0])) and (min(p[1], r[1]) >= q[1] > max(p[1], r[1])):
-        return True
-    return False
-
-
-def ccw(p, q, r):
-    val = ((q[1] - p[1]) * (r[0] - q[0])) - ((q[0] - p[0]) * (r[1] - q[1]))
-    if val == 0:
-        return val
-    return 1 if val > 0 else 2
-
-
-def intersect(p1, p2, p3, p4):
-    ccw1, ccw2, ccw3, ccw4 = ccw(p1, p2, p3), ccw(p1, p2, p4), ccw(p3, p4, p1), ccw(p3, p4, p2)
-
-    if ccw1 != ccw2 and ccw3 != ccw4:
-        return True
-
-    if ccw1 == 0 and onSeg(p1, p3, p2):
-        return True
-    if ccw2 == 0 and onSeg(p1, p4, p2):
-        return True
-    if ccw3 == 0 and onSeg(p3, p1, p4):
-        return True
-    if ccw4 == 0 and onSeg(p3, p2, p4):
-        return True
-
-    return False
-
-
-def getChildren(node, v, e, shape):
-    children = []
-    for point in v:
-        intersected = False
-        for edge in e:
-            # check if intersects
-            if intersect(node.position, point, edge[0], edge[1]) and point not in edge and node.position not in edge:
-                intersected = True
-        if not intersected and node.position != point:
-            # check if point is in shape and adjacent
-            dissects_shape = False
-            for shpe in shape:
-                if point in shpe and node.position in shpe:
-                    if point == shpe[-1]:
-                        if not (node.position == shpe[-2] or node.position == shpe[0]) and point not in children:
-                            dissects_shape = True
-                    elif not (node.position == shpe[shpe.index(point) + 1] or node.position == shpe[
-                        shpe.index(point) - 1]):
-                        dissects_shape = True
-            if point not in children and not dissects_shape:
-                children.append(point)
-    return children
 
 
 def ED(point, end):
     return sqrt(((point[0] - end[0]) ** 2) + ((point[1] - end[1]) ** 2))
 
 
-class AStar:
-    def __init__(self, v, e, shape):
-        self.v = v
-        self.e = e
-        self.shape = shape
+def astar(grid, start, end, size):
+    # Create start and end node
+    start_node = Node(None, start)
+    start_node.g = start_node.h = start_node.f = 0
+    end_node = Node(None, end)
+    end_node.g = end_node.h = end_node.f = 0
+    g = inf
+    w = 51
+    incumbent = []
 
-    def astar(self, start, end, user_input):
-        # Create start and end node
-        start_node = Node(None, start)
-        start_node.g = start_node.h = start_node.f = 0
-        end_node = Node(None, end)
-        end_node.g = end_node.h = end_node.f = 0
-        g = inf
-        w = 101
-        incumbent = []
+    open_list = [start_node]
 
-        # Initialize open list
-        open_list = []
+    # Loop until you find the end
+    finished = False
+    while len(open_list) > 0 and not finished:
+        if w == 1:
+            finished = True
+        newSolution = improve_astar(open_list, w, end_node, start_node, grid)
+        if newSolution is not None:
+            g = newSolution[1]
+            incumbent = newSolution[0]
+            print(incumbent)
+            #GUI(grid, incumbent, size)
+        else:
+            return incumbent
 
-        # Add the start node
-        h.heappush(open_list, (start_node.f, start_node))
+        if w > 1:
+            w = w - 10
+            open_list = [start_node]
 
-        # Loop until you find the end
-        finished = False
-        while len(open_list) > 0 and not finished:
-            if w == 1:
-                finished = True
-            newSolution = self.improveAstar(open_list, w, g, end_node, start)
-            if newSolution is not None:
-                g = newSolution[1]
-                incumbent = newSolution[0]
-                GUI(incumbent, self.v, False, user_input)
-            else:
-                return incumbent
+        for node in open_list:
+            if node.f >= g:
+                open_list.pop(open_list.index(node))
 
-            if w > 1:
-                w = w - 10
+    return incumbent
 
-            for node in open_list:
-                if node[1].f >= g:
-                    open_list.pop(open_list.index(node))
 
-        return incumbent
+def improve_astar(open_list, w, end, start, grid):
+    # Create start and end node
+    start_node = start
+    start_node.g = start_node.h = start_node.f = 0
+    end_node = end
+    end_node.g = end_node.h = end_node.f = 0
 
-    def improveAstar(self, open_list_inc, w, g, end_node, start):
-        start_node = Node(None, start)
-        start_node.g = start_node.h = start_node.f = 0
-        closed_list = []
-        open_list = open_list_inc
+    # Initialize both open and closed list
+    open_list = open_list
+    closed_list = []
 
-        h.heappush(open_list, (start_node.f, start_node))
+    # Add the start node
 
-        while len(open_list) > 0:
-            # Get the current node
-            current_node = h.heappop(open_list)[1]
-            closed_list.append(current_node)
+    # Loop until you find the end
+    while len(open_list) > 0:
 
-            if current_node == end_node:
-                path = []
-                current = current_node
-                while current is not None:
-                    path.append(current.position)
-                    current = current.parent
-                return path[::-1], current_node.g
+        # Get the current node
+        current_node = open_list[0]
+        current_index = 0
+        for index, item in enumerate(open_list):
+            if item.f < current_node.f:
+                current_node = item
+                current_index = index
 
-            # gets points that we can go to
-            children = getChildren(current_node, self.v, self.e, self.shape)
+        # Pop current off open list, add to closed list
+        open_list.pop(current_index)
+        closed_list.append(current_node)
 
-            # add children nodes to open list
-            for point in children:
-                child_node = Node(current_node, point)
+        # Found the goal
+        if current_node == end_node:
+            path = []
+            current = current_node
+            while current is not None:
+                path.append(current.position)
+                current = current.parent
+            return path[::-1], current_node.g  # Return reversed path
 
-                # calculate scores
-                child_node.g = ED(current_node.position, point) + current_node.g
-                child_node.h = ED(point, end_node.position)
-                child_node.f = child_node.g + (child_node.h * w)
+        # Generate children
+        children = []
+        for new_position in [(0, -1), (0, 1), (-1, 0), (1, 0), (-1, -1), (-1, 1), (1, -1), (1, 1)]:
 
-                # check if node in open or closed list
-                for node in open_list:
-                    if child_node == node[1] and child_node.g > node[1].g:
+            # Get node position
+            node_position = (current_node.position[0] + new_position[0], current_node.position[1] + new_position[1])
+
+            # Make sure within range
+            if node_position[0] > (len(grid) - 1) or node_position[0] < 0 or node_position[1] > (
+                    len(grid[len(grid) - 1]) - 1) or node_position[1] < 0:
+                continue
+
+            if grid[node_position[0]][node_position[1]] != 0:
+                continue
+
+            child_node = Node(current_node, node_position)
+
+            # Append
+            children.append(child_node)
+
+        # Loop through children
+        for child in children:
+
+            # Child is on the closed list
+            for closed_child in closed_list:
+                if child == closed_child:
+                    continue
+
+            # Create the f, g, and h values
+            child.g = ED(current_node.position, child.position) + current_node.g
+            child.h = ((child.position[0] - end_node.position[0]) ** 2) + (
+                    (child.position[1] - end_node.position[1]) ** 2)
+            child.f = child.g + (child.h * w)
+
+            # Child is already in the open list
+            for open_node in open_list:
+                if child == open_node:
+                    if child.g >= open_node.g:
                         continue
+                    else:
+                        child.g = open_node.g
 
-                for node in closed_list:
-                    if child_node == node:
-                        continue
+            # Add the child to the open list
+            open_list.append(child)
 
-                h.heappush(open_list, (child_node.f, child_node))
-        return None
+    return None
