@@ -23,42 +23,37 @@ def astar(grid, start, end, size):
     while len(open_list) > 0 and not finished:
         if w == 1:
             finished = True
-        newSolution = improve_astar(open_list, w, end_node, start_node, grid)
+        newSolution = improve_astar(open_list, w, end_node, grid, size)
         if newSolution is not None:
             g = newSolution[1]
             incumbent = newSolution[0]
             print(incumbent)
-            #GUI(grid, incumbent, size)
         else:
             return incumbent
 
+        w = w - 10
         if w > 1:
             w = w - 10
-            open_list = [start_node]
+            # open_list = [start_node]
 
+        open_list2 = open_list
         for node in open_list:
-            if node.f >= g:
-                open_list.pop(open_list.index(node))
+            if node.f < g:
+                open_list2.append(node)
 
+        open_list = open_list2
     return incumbent
 
 
-def improve_astar(open_list, w, end, start, grid):
-    # Create start and end node
-    start_node = start
-    start_node.g = start_node.h = start_node.f = 0
-    end_node = end
-    end_node.g = end_node.h = end_node.f = 0
-
+def improve_astar(open_list, w, end, grid, size):
     # Initialize both open and closed list
-    open_list = open_list
     closed_list = []
-
-    # Add the start node
 
     # Loop until you find the end
     while len(open_list) > 0:
-
+        # this print is for debugging
+        if len(open_list) > size*size:
+            print(len(open_list))
         # Get the current node
         current_node = open_list[0]
         current_index = 0
@@ -72,7 +67,7 @@ def improve_astar(open_list, w, end, start, grid):
         closed_list.append(current_node)
 
         # Found the goal
-        if current_node == end_node:
+        if current_node == end:
             path = []
             current = current_node
             while current is not None:
@@ -102,27 +97,29 @@ def improve_astar(open_list, w, end, start, grid):
 
         # Loop through children
         for child in children:
+            skip = False
 
             # Child is on the closed list
             for closed_child in closed_list:
                 if child == closed_child:
+                    skip = True
                     continue
 
             # Create the f, g, and h values
             child.g = ED(current_node.position, child.position) + current_node.g
-            child.h = ((child.position[0] - end_node.position[0]) ** 2) + (
-                    (child.position[1] - end_node.position[1]) ** 2)
+            child.h = ED(child.position, end.position)
             child.f = child.g + (child.h * w)
 
             # Child is already in the open list
             for open_node in open_list:
-                if child == open_node:
-                    if child.g >= open_node.g:
-                        continue
-                    else:
-                        child.g = open_node.g
+                if child == open_node and child.g > open_node.g:
+                    skip = True
+                    continue
 
             # Add the child to the open list
+            if skip:
+                continue
+
             open_list.append(child)
 
     return None
