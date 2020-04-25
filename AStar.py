@@ -13,7 +13,7 @@ def astar(grid, start, end, size):
     end_node = Node(None, end)
     end_node.g = end_node.h = end_node.f = 0
     g = inf
-    w = 51
+    w = 41
     incumbent = []
 
     open_list = [start_node]
@@ -23,7 +23,7 @@ def astar(grid, start, end, size):
     while len(open_list) > 0 and not finished:
         if w == 1:
             finished = True
-        newSolution = improve_astar(open_list, w, end_node, grid, size)
+        newSolution = improve_astar(open_list, w, end_node, start, grid, size)
         if newSolution is not None:
             g = newSolution[1]
             incumbent = newSolution[0]
@@ -31,24 +31,28 @@ def astar(grid, start, end, size):
         else:
             return incumbent
 
-        w = w - 10
         if w > 1:
             w = w - 10
             # open_list = [start_node]
 
-        open_list2 = open_list
+        open_list2 = []
         for node in open_list:
-            if node.f < g:
+            if node.g + node.h < g:
                 open_list2.append(node)
 
         open_list = open_list2
+
     return incumbent
 
 
-def improve_astar(open_list, w, end, grid, size):
+def improve_astar(open_list, w, end, start, grid, size):
+    start_node = Node(None, start)
+    start_node.g = start_node.h = start_node.f = 0
+    end_node = Node(None, end)
+    end_node.g = end_node.h = end_node.f = 0
+
     # Initialize both open and closed list
     closed_list = []
-
     # Loop until you find the end
     while len(open_list) > 0:
         # this print is for debugging
@@ -112,14 +116,19 @@ def improve_astar(open_list, w, end, grid, size):
 
             # Child is already in the open list
             for open_node in open_list:
-                if child == open_node and child.g > open_node.g:
+                if child == open_node and child.g >= open_node.g:
                     skip = True
                     continue
+                elif child == open_node and child.g < open_node.g:
+                    open_node.g = child.g
+                    open_node.f = child.f
+                    open_node.h = child.h
+                    open_node.parent = child.parent
+                    skip = True
 
             # Add the child to the open list
             if skip:
                 continue
-
             open_list.append(child)
 
     return None

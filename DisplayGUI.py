@@ -11,7 +11,7 @@ class GUI:
         black = (0, 0, 0)
         red = (255, 0, 0)
         green = (0, 170, 0)
-        blue = (0 , 0, 255)
+        blue = (0, 0, 255)
         width = 750 / size - 1
         height = 750 / size - 1
         margin = 1
@@ -28,13 +28,6 @@ class GUI:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     finished = True
-                elif event.type == pygame.MOUSEBUTTONDOWN:
-                    pos = pygame.mouse.get_pos()
-                    column = pos[0] // (width + margin)
-                    row = pos[1] // (width + margin)
-                    grid[row][column] = 1
-                    print("Click ", pos, "Grid coordinates: ", row, column)
-
             # Set the screen background
             gameDisplay.fill(black)
 

@@ -40,8 +40,8 @@ def main():
             sys.exit()
 
     if user_input == '1':
-        size = 50
-        percent = 25
+        size = 25
+        percent = 50
     elif user_input == '2':
         size = 100
     elif user_input == '3':
