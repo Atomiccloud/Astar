@@ -1,5 +1,6 @@
 from math import sqrt, inf
 from Node import Node
+import heapq as h
 
 
 def ED(point, end):
@@ -33,7 +34,9 @@ def astar(grid, start, end, size):
 
         if w > 1:
             w = w - 10
-            # open_list = [start_node]
+            for node in open_list:
+                node.f = node.g + (node.h * w)
+                node = node.f
 
         open_list2 = []
         for node in open_list:
@@ -46,13 +49,6 @@ def astar(grid, start, end, size):
 
 
 def improve_astar(open_list, w, end, start, grid, size):
-    start_node = Node(None, start)
-    start_node.g = start_node.h = start_node.f = 0
-    end_node = Node(None, end)
-    end_node.g = end_node.h = end_node.f = 0
-
-    # Initialize both open and closed list
-    closed_list = []
     # Loop until you find the end
     while len(open_list) > 0:
         # this print is for debugging
@@ -68,7 +64,6 @@ def improve_astar(open_list, w, end, start, grid, size):
 
         # Pop current off open list, add to closed list
         open_list.pop(current_index)
-        closed_list.append(current_node)
 
         # Found the goal
         if current_node == end:
@@ -102,12 +97,6 @@ def improve_astar(open_list, w, end, start, grid, size):
         # Loop through children
         for child in children:
             skip = False
-
-            # Child is on the closed list
-            for closed_child in closed_list:
-                if child == closed_child:
-                    skip = True
-                    continue
 
             # Create the f, g, and h values
             child.g = ED(current_node.position, child.position) + current_node.g
